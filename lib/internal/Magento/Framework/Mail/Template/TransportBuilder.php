@@ -32,6 +32,7 @@ use Magento\Framework\Phrase;
  *
  * @api
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @since 100.0.2
  */
 class TransportBuilder
 {
@@ -87,7 +88,7 @@ class TransportBuilder
     /**
      * Message
      *
-     * @var MessageInterface
+     * @var EmailMessageInterface
      */
     protected $message;
 
@@ -243,7 +244,7 @@ class TransportBuilder
      * @throws InvalidArgumentException
      * @see setFromByScope()
      *
-     * @deprecated This function sets the from address but does not provide
+     * @deprecated 102.0.1 This function sets the from address but does not provide
      * a way of setting the correct from addresses based on the scope.
      */
     public function setFrom($from)
@@ -260,6 +261,7 @@ class TransportBuilder
      * @return $this
      * @throws InvalidArgumentException
      * @throws MailException
+     * @since 102.0.1
      */
     public function setFromByScope($from, $scopeId = null)
     {
@@ -377,7 +379,6 @@ class TransportBuilder
     {
         $template = $this->getTemplate();
         $content = $template->processTemplate();
-
         switch ($template->getType()) {
             case TemplateTypesInterface::TYPE_TEXT:
                 $part['type'] = MimeInterface::TYPE_TEXT;
@@ -392,10 +393,12 @@ class TransportBuilder
                     new Phrase('Unknown template type')
                 );
         }
-
-        /** @var \Magento\Framework\Mail\MimePartInterface $mimePart */
-        $mimePart = $this->mimePartInterfaceFactory->create(['content' => $content]);
-        $this->messageData['encoding'] = $mimePart->getCharset();
+        $mimePart = $this->mimePartInterfaceFactory->create(
+        	[
+        		'content' => $content,
+        		'type' => $part['type']
+        	]
+        );
         $this->messageData['body'] = $this->mimeMessageInterfaceFactory->create(
             ['parts' => [$mimePart]]
         );
@@ -404,7 +407,6 @@ class TransportBuilder
             (string)$template->getSubject(),
             ENT_QUOTES
         );
-
         $this->message = $this->emailMessageInterfaceFactory->create($this->messageData);
 
         return $this;
@@ -432,8 +434,6 @@ class TransportBuilder
                 $this->messageData[$addressType],
                 $convertedAddressArray
             );
-        } else {
-            $this->messageData[$addressType] = $convertedAddressArray;
         }
     }
 }
